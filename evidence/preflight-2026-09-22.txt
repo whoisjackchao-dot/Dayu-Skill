@@ -1,0 +1,30 @@
+
+dayu-ultra preflight
+───────────────────────────────────────────────────────────
+  依赖                     状态   证据
+───────────────────────────────────────────────────────────
+  oh-my-opencode             ✅ 已装 oh-my-openagent@4.19.4
+  obra/superpowers           ✅ 已装 superpowers@git+https://github.com/obra/superpowers.git
+  HughYau/qiushi-skill       ✅ 已装 技能 arming-thought + contradiction-analysis 在册
+  RobMitt/grill-me           ✅ 已装 技能 grill-me 在册
+───────────────────────────────────────────────────────────
+  dayu（互斥检查）     ⚠️ 已装 磁盘共存没问题；但同一次会话内不要与 dayu-ultra 同时加载
+  技能总数：70   插件条目：4
+
+  ✅ 四项依赖齐备，可以开始 ultra 编排。
+  （若刚装过插件，仍需重启 OpenCode 才会生效。）
+
+{
+  "oh_my_opencode": true,
+  "superpowers": true,
+  "qiushi_skill": true,
+  "grill_me": true,
+  "dayu_installed": true
+}
+
+vendor 漂移检查：dayu-ultra/references vs /home/shiwenc/.config/opencode/skills/dayu/references
+───────────────────────────────────────────────────────────
+  [已登记偏离] templates/contracts/README.md
+───────────────────────────────────────────────────────────
+  ✅ 无未登记漂移（已登记偏离 1 处，见 provenance/vendor-manifest.md）
+
