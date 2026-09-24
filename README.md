@@ -137,22 +137,24 @@ $ARGUMENTS
 
 ---
 
-## 分支与变体
+## 分支与变体（DLC）
 
-除 `main`（本技能本体）外，仓库还以分支形式承载衍生 skill。各分支基于 `main` 只增不改，可独立审阅与合并。
+把本仓库当成一款游戏：**`main` 是本体（base game）**——`dayu` skill 完整、自洽、零依赖，单独安装即可玩通全流程。下面的分支是**DLC（可下载内容）**：可选的延伸内容，装不装、什么时候装、装哪个，都不影响本体运行；卸载也只需删目录，本体毫发无损。
 
-### `feature/token-check` — 项目 token 消耗统计
+各 DLC 分支基于 `main` **只增不改**：不删本体任何文件、不改本体任何行为，因此可以独立审阅、随时合并或永远不合并。
 
-从 OpenCode 会话库聚合任意项目的 token 消耗与费用，并按实证阈值给优化建议。
+### DLC ① `feature/token-check` — 独立扩展包（与本体无耦合）
+
+**新玩法，不改本体。** 项目 token 消耗统计与费用优化建议——它不依赖 `dayu`，本体用户完全可以只装这一个 DLC。
 
 - `token-check/SKILL.md`：方法论（四级会话归类 / 费用三分口径 billed-estimated-unknown / 窗口以数据为准）与用法
 - `token-check/scripts/`：统计脚本（纯 Python 标准库）、价目表、配置模板
 - 特色：token-per-milestone 里程碑分段（各节点消耗 / 强度 / 守恒自检）
 - 来源：ESP32-S3-M5 项目 14 天真实消耗复盘（7.9 亿 tokens，踩坑规则已固化进 SKILL.md）
 
-### `feature/dayu-ultra` — 依赖编排版
+### DLC ② `feature/dayu-ultra` — 资料片（Expansion Pack，自带本体拷贝）
 
-`dayu` 的**编排增强版**：六阶段可审计流程之外，多一层依赖感知与协作编排——开工先跑 preflight 检测依赖、缺什么装什么，每个阶段把工作委派给最合适的协作技能。
+**本体的大型扩展。** 在六阶段可审计流程之外多一层依赖感知与协作编排——开工先跑 preflight 检测依赖、缺什么装什么，每个阶段把工作委派给最合适的协作技能。它 vendor 了 `dayu` 的全部参考文件，因此**安装它不需要先装本体**；但也因此**与本体互斥**——同一次会话内不要同时加载两者（如同不要同时打本体补丁和资料片补丁）。想要零依赖、离线 → 玩本体；想要编排 → 上资料片。
 
 ```
 dayu-ultra/                   技能本体（可直接安装）
@@ -166,5 +168,10 @@ evidence/                     preflight 运行原始输出
 
 安装：`cp -r dayu-ultra ~/.config/opencode/skills/dayu-ultra`（DSH 为 `~/.dsh/skills/dayu-ultra/`），命令拷至 `~/.config/opencode/command/`。
 
-> **与 `dayu` 互斥**：ultra 已 vendor `dayu` 的全部参考文件，同一次会话内不要同时加载两者。
-> 想要零依赖、离线 → 用 `dayu`；想要编排 → 用 `dayu-ultra`。
+### DLC 安装纪律
+
+| 想要 | 动作 |
+| --- | --- |
+| 只用本体 | 只装 `main` 的 `dayu/`，到此为止 |
+| 加统计玩法 | 追加安装 `feature/token-check` 的 `token-check/`，与本体互不干扰 |
+| 换资料片玩法 | 安装 `feature/dayu-ultra` 的 `dayu-ultra/`，**同时停用本体目录**（二选一加载） |
