@@ -134,3 +134,37 @@ $ARGUMENTS
 - 纯粹的信息查询。
 
 判断标准：**这个项目会不会跨越多次会话、需要向他人证明结论的真实性？** 两个都否，就不必动用全套。
+
+---
+
+## 分支与变体
+
+除 `main`（本技能本体）外，仓库还以分支形式承载衍生 skill。各分支基于 `main` 只增不改，可独立审阅与合并。
+
+### `feature/token-check` — 项目 token 消耗统计
+
+从 OpenCode 会话库聚合任意项目的 token 消耗与费用，并按实证阈值给优化建议。
+
+- `token-check/SKILL.md`：方法论（四级会话归类 / 费用三分口径 billed-estimated-unknown / 窗口以数据为准）与用法
+- `token-check/scripts/`：统计脚本（纯 Python 标准库）、价目表、配置模板
+- 特色：token-per-milestone 里程碑分段（各节点消耗 / 强度 / 守恒自检）
+- 来源：ESP32-S3-M5 项目 14 天真实消耗复盘（7.9 亿 tokens，踩坑规则已固化进 SKILL.md）
+
+### `feature/dayu-ultra` — 依赖编排版
+
+`dayu` 的**编排增强版**：六阶段可审计流程之外，多一层依赖感知与协作编排——开工先跑 preflight 检测依赖、缺什么装什么，每个阶段把工作委派给最合适的协作技能。
+
+```
+dayu-ultra/                   技能本体（可直接安装）
+├── SKILL.md                  agent 入口
+├── tools/preflight.sh        依赖检测 / 安装 / vendor 漂移检查
+├── references/               preflight + orchestration（自有）+ vendor 自 dayu 的 12 份
+└── provenance/               vendor 来源 md5、依赖实测证据
+opencode/                     /dayu-ultra 斜杠命令 + grill-me 配套技能
+evidence/                     preflight 运行原始输出
+```
+
+安装：`cp -r dayu-ultra ~/.config/opencode/skills/dayu-ultra`（DSH 为 `~/.dsh/skills/dayu-ultra/`），命令拷至 `~/.config/opencode/command/`。
+
+> **与 `dayu` 互斥**：ultra 已 vendor `dayu` 的全部参考文件，同一次会话内不要同时加载两者。
+> 想要零依赖、离线 → 用 `dayu`；想要编排 → 用 `dayu-ultra`。
