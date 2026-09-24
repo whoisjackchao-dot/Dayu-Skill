@@ -1,0 +1,25 @@
+{
+  "_说明": "ESP32-S3M5 项目 token 费用估算价目表。单位: 美元/百万tokens。status: billed=DB已计价(工具直接用DB cost, 此处仅fallback) / estimated=包月或中转模型的API牌价估算(请在estimate_note核对账单后修正) / unknown=无可靠单价(工具将单列未计价用量, 不估算费用)。cache_read为缓存命中输入价, cache_write为缓存写入价(缺省视为0)。",
+  "_更新方法": "发现新的 unknown 模型时, 查官方价目后把 null 改为数字即可; 修正估算价后把 estimate_note 里的日期更新。",
+  "version": "2026-09-24",
+  "models": {
+    "deepseek/deepseek-v4-flash":  {"in": 0.1403, "out": 1.9976, "cache_read": 0.0015, "status": "billed",    "note": "DB有真实cost; 此为3x3方程组拟合的近似fallback, 平均误差约54%, 勿直接引用"},
+    "deepseek/deepseek-v4-pro":    {"in": 0.4367, "out": 4.6571, "cache_read": 0.0004, "status": "billed",    "note": "DB有真实cost; 拟合近似fallback, 误差大, 勿直接引用"},
+    "deepseek/deepseek-flash":     {"in": 0.066,  "out": 3.4513, "cache_read": 0.0003, "status": "billed",    "note": "DB有真实cost; 拟合近似fallback(平均误差8.7%), 勿直接引用"},
+    "zhipuai-coding-plan/glm-5.2": {"in": 0.044,  "out": 0.132,  "cache_read": 0.0044, "status": "estimated", "estimate_note": "由2026-09-22唯一真实样本(cost=0.1388)按out=3x in、cache_read=0.1x in假设反推; 未经账单核实"},
+    "zhipu-coding-plan/glm-5.3-flash": {"in": 0.05, "out": 0.3, "cache_read": 0.005, "status": "estimated", "estimate_note": "包月(zhipu coding plan), DB cost=0; 此为对标GLM-4.6/flash系列的保守API牌价估计, 2026-09-24填写, 请按账单修正"},
+    "zhipu-coding-plan/glm-5.3":       {"in": 0.6,  "out": 2.2, "cache_read": 0.06,  "status": "estimated", "estimate_note": "包月; 对标GLM-4.6美元牌价的估计值, 2026-09-24填写, 请按账单修正"},
+    "volcengine-ark/glm-5.3":          {"in": 0.6,  "out": 2.2, "cache_read": 0.06,  "status": "estimated", "estimate_note": "火山方舟中转, DB cost=0; 对标GLM-4.6美元牌价的估计值, 请按账单修正"},
+    "volcengine-coding-plan/glm-5.3-flash": {"in": 0.05, "out": 0.3, "cache_read": 0.005, "status": "estimated", "estimate_note": "火山方舟包月, DB cost=0; 对标flash系列估计值, 请按账单修正"},
+    "volcengine-ark/glm-5-3-flash": {"in": 0.05, "out": 0.3, "cache_read": 0.005, "status": "estimated", "estimate_note": "glm-5.3-flash 的ID变体(glm-5-3-flash), 同上"},
+    "volcengine-ark/deepseek-v4-flash": {"in": 0.14, "out": 2.0, "cache_read": 0.0015, "status": "estimated", "estimate_note": "火山方舟中转, DB cost=0; 参考deepseek直连拟合值"},
+    "nexus-staging/gpt-5.6":        {"in": null, "out": null, "cache_read": null, "status": "unknown", "note": "内部中转模型, 无可靠公开单价; 用量将单列不计费"},
+    "nexus-staging/gpt-6-astra":    {"in": null, "out": null, "cache_read": null, "status": "unknown", "note": "内部中转模型, 无可靠公开单价; 用量将单列不计费"},
+    "nexus-staging-gemini/gemini-3.8-flash": {"in": null, "out": null, "cache_read": null, "status": "unknown", "note": "内部中转模型, 无可靠公开单价; 用量将单列不计费"},
+    "opencode/big-pickle":          {"in": null, "out": null, "cache_read": null, "status": "unknown", "note": "OpenCode内置模型, 未见官方单价"}
+  },
+  "defaults": {
+    "per_provider": {},
+    "global": {"in": null, "out": null, "cache_read": null, "status": "unknown"}
+  }
+}

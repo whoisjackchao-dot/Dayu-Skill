@@ -1,0 +1,6 @@
+{
+  "_说明": "全局 token 统计的本地配置(项目无关)。项目识别词优先用命令行 --keywords 传入; 长期项目可把词固化到本文件的 project_title_keywords / project_message_keywords 数组。overrides: 会话id前缀 -> project|exclude, 用于人工修正待复核会话。",
+  "project_title_keywords": [],
+  "project_message_keywords": [],
+  "overrides": {}
+}
