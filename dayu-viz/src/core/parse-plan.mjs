@@ -1,5 +1,5 @@
-import { parseDocument, findTables, colIndex, cellAt } from './markdown.mjs';
-import { UNKNOWN, addWarning, extractIds, stripEmphasis } from './model.mjs';
+import { parseDocument, colIndex, cellAt } from './markdown.mjs';
+import { UNKNOWN, addWarning, stripEmphasis } from './model.mjs';
 
 const FIELD_KEYS = [
   ['userValue', /用户价值/],
@@ -28,7 +28,10 @@ export function parsePlan(text, project, file = '05-plan.md') {
   project.planExtras = project.planExtras ?? { dor: [], constants: [], authorizations: [], demos: [] };
 
   // ---- 1. 节点序列 ----
-  const seqTable = findTables(doc, /节点序列/)[0];
+  // 叠加表头判据：findTables 的标题路径含文档标题，只按标题匹配可能命中文档里的第一张表。
+  const seqTable = doc.tables.find(
+    (t) => colIndex(t.header, '节点') >= 0 && colIndex(t.header, '名称') >= 0,
+  );
   const byId = new Map();
   if (seqTable) {
     const idIdx = colIndex(seqTable.header, '节点');

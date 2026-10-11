@@ -1,4 +1,4 @@
-import { parseDocument, findTables, colIndex, cellAt } from './markdown.mjs';
+import { parseDocument, colIndex, cellAt } from './markdown.mjs';
 import {
   UNKNOWN, addWarning, normalizeDecisionState, extractIds, extractDate, stripEmphasis,
 } from './model.mjs';
