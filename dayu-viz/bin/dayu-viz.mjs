@@ -51,7 +51,15 @@ export async function main(argv = process.argv.slice(2)) {
     try { spawn(cmd, cmdArgs, { stdio: 'ignore', detached: true }).unref(); } catch { /* 打开失败不影响服务 */ }
   }
 
-  const shutdown = () => { watcher.close(); server.close(() => process.exit(0)); };
+  const shutdown = () => {
+    watcher.close();
+    // 先断开 SSE 长连接，否则 server.close() 会一直等待浏览器端 /events 连接
+    server.closeSseClients?.();
+    // 兜底：即使仍有残留 socket，进程也必须在 ~1s 内退出
+    const force = setTimeout(() => process.exit(0), 1000);
+    force.unref();
+    server.close(() => process.exit(0));
+  };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }

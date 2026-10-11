@@ -36,3 +36,19 @@ test('模型缺字段时渲染 unknown 文案而不是抛错', () => {
   assert.equal(typeof html, 'string');
   assert.match(html, /未提供/);
 });
+
+test('status.phase 为 undefined 时渲染「未提供」，不得出现字面量 undefined', () => {
+  const p = emptyProject('D:/x', 'D:/x/docs', '2026-10-11T00:00:00.000Z');
+  p.status.phase = undefined;
+  const html = renderOverview(p);
+  assert.match(html, /未提供/);
+  assert.equal(html.includes('undefined'), false, '页面不得渲染字面量 undefined');
+});
+
+test('status.phase 为 null 时渲染「未提供」，不得出现字面量 null 阶段', () => {
+  const p = emptyProject('D:/x', 'D:/x/docs', '2026-10-11T00:00:00.000Z');
+  p.status.phase = null;
+  const html = renderOverview(p);
+  assert.match(html, /未提供/);
+  assert.equal(html.includes('阶段 null'), false, '页面不得渲染「阶段 null」');
+});

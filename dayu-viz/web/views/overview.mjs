@@ -22,7 +22,7 @@ export function renderOverview(model) {
 
   const redline = `
     <div class="redline">
-      <span>阶段 <b>${s.phase === 'unknown' ? UNKNOWN_TEXT : s.phase}</b></span>
+      <span>阶段 <b>${s.phase === 'unknown' || s.phase == null ? UNKNOWN_TEXT : s.phase}</b></span>
       <span>节点 <b>${text(s.currentNode)}</b></span>
       <span>待批准 <b>${(model?.decisions ?? []).filter((d) => d.state === 'pending' || d.state === 'undecided').length}</b></span>
       <span>数据时间 <b>${escapeHtml(model?.meta?.parsedAt ?? UNKNOWN_TEXT)}</b></span>
@@ -45,7 +45,7 @@ export function renderOverview(model) {
     ${redline}
     ${section('当前状态', `
       <dl class="kv">
-        <dt>当前阶段</dt><dd>${s.phase === 'unknown' ? UNKNOWN_TEXT : '阶段 ' + s.phase}</dd>
+        <dt>当前阶段</dt><dd>${s.phase === 'unknown' || s.phase == null ? UNKNOWN_TEXT : '阶段 ' + s.phase}</dd>
         <dt>当前节点</dt><dd>${text(s.currentNode)}</dd>
         <dt>本会话目标</dt><dd>${text(s.sessionGoal)}</dd>
         <dt>文档版本</dt><dd>${text(s.docVersion)}</dd>

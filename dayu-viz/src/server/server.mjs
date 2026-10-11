@@ -41,8 +41,7 @@ export function createHttpServer({ projectRoot, webDir }) {
 
       const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
       const abs = path.join(webDir, rel);
-      const rootAbs = path.resolve(webDir);
-      if (!path.resolve(abs).startsWith(rootAbs + path.sep) && path.resolve(abs) !== rootAbs) {
+      if (!isInsideDir(webDir, abs)) {
         return sendJson(res, 403, { error: 'forbidden' });
       }
       const data = await fs.readFile(abs);
@@ -61,7 +60,27 @@ export function createHttpServer({ projectRoot, webDir }) {
     }
   };
 
+  // 供退出流程调用：主动结束所有 SSE 长连接。
+  // server.close() 会等待所有连接断开，而 /events 常驻不关，必须先断开 SSE 客户端。
+  server.closeSseClients = () => {
+    for (const res of clients) {
+      try { res.end(); } catch { /* 客户端已断开 */ }
+    }
+    clients.clear();
+  };
+
+  // 测试/调用方可观测的连接数（不暴露内部 Set 本体）
+  server.sseClientCount = () => clients.size;
+
   return server;
+}
+
+// 纯函数：判断 targetPath 是否位于 rootDir 之内（含 root 本身）。
+// 显式导出以便直接单测——URL 解析会归一化 `..`，请求路径永远走不到拒绝分支。
+export function isInsideDir(rootDir, targetPath) {
+  const root = path.resolve(rootDir);
+  const target = path.resolve(targetPath);
+  return target === root || target.startsWith(root + path.sep);
 }
 
 function sendJson(res, status, body) {
