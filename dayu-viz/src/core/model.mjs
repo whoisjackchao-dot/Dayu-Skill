@@ -55,7 +55,7 @@ export function normalizeDecisionState(text) {
 export function normalizeCaseState(text) {
   const t = stripEmphasis(text).toUpperCase();
   if (!t) return UNKNOWN;
-  // NOT_APPLICABLE_APPROVED 必须先匹配，否则会被 NOT_RUN 的包含关系误判
+  // 防御性排序：最长/最具体优先。将来若新增「以较短状态名为子串」的状态名，也不会被遮蔽。
   for (const s of CASE_STATES) {
     if (t.includes(s)) return s;
   }

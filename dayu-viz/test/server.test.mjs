@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import nodePath from 'node:path';
@@ -128,6 +129,54 @@ test('静态目录内缺失文件返回 404', async () => {
   try {
     const res = await fetch(`http://127.0.0.1:${port}/definitely-missing-file.txt`);
     assert.equal(res.status, 404);
+  } finally {
+    await new Promise((r) => server.close(r));
+  }
+});
+
+// 客户端必须用 node:http 的 http.request：fetch/undici 会在客户端侧拒绝或归一化畸形
+// 百分号编码，请求根本到不了服务端，只有 http.request 能把 /%zz 原样发出。
+// 回归目标：decodeURIComponent 曾抛在 try 之外，这个请求会以未捕获异常杀死整个进程。
+test('畸形百分号编码（/%zz）返回 400，且服务进程存活', async () => {
+  const server = createHttpServer({ projectRoot: FIXTURE, webDir: null });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address();
+  try {
+    const bad = await new Promise((resolve, reject) => {
+      const req = http.request(
+        { host: '127.0.0.1', port, path: '/%zz', method: 'GET', agent: false },
+        (r) => {
+          let body = '';
+          r.setEncoding('utf8');
+          r.on('data', (c) => { body += c; });
+          r.on('end', () => resolve({ status: r.statusCode, body }));
+        },
+      );
+      req.on('error', reject);
+      req.end();
+    });
+
+    assert.equal(bad.status, 400, `畸形路径应返回 400，实际 ${bad.status}`);
+    assert.match(bad.body, /bad request/);
+
+    // 进程存活证据 1：监听状态未变
+    assert.equal(server.listening, true, '畸形请求后服务端应仍在监听');
+
+    // 进程存活证据 2：同一实例上正常请求照常成功（进程若被杀，这里会 ECONNREFUSED）
+    const ok = await fetch(`http://127.0.0.1:${port}/api/model`);
+    assert.equal(ok.status, 200, '畸形请求之后服务端必须仍能正常服务');
+    assert.equal((await ok.json()).status.phase, 2);
+
+    // 进程存活证据 3：处理器仍注册着，第二个畸形请求同样得到 400 而不是连接重置
+    const bad2 = await new Promise((resolve, reject) => {
+      const req = http.request(
+        { host: '127.0.0.1', port, path: '/%zz', method: 'GET', agent: false },
+        (r) => { r.resume(); r.on('end', () => resolve(r.statusCode)); },
+      );
+      req.on('error', reject);
+      req.end();
+    });
+    assert.equal(bad2, 400, '处理器必须仍然存活并继续返回 400');
   } finally {
     await new Promise((r) => server.close(r));
   }

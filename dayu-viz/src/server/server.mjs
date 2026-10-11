@@ -17,9 +17,12 @@ export function createHttpServer({ projectRoot, webDir }) {
 
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
-    const pathname = decodeURIComponent(url.pathname);
 
     try {
+      // decodeURIComponent 必须在 try 内：畸形百分号编码（如 /%zz）会抛 URIError，
+      // 抛在 try 外就是无 handler 的同步异常，会直接杀死整个服务进程。
+      const pathname = decodeURIComponent(url.pathname);
+
       if (pathname === '/api/model') {
         const model = await loadProject(projectRoot);
         return sendJson(res, 200, model);
@@ -48,6 +51,7 @@ export function createHttpServer({ projectRoot, webDir }) {
       res.writeHead(200, { 'Content-Type': MIME[path.extname(abs)] ?? 'application/octet-stream' });
       return res.end(data);
     } catch (err) {
+      if (err instanceof URIError) return sendJson(res, 400, { error: 'bad request' });
       if (err.code === 'ENOENT') return sendJson(res, 404, { error: 'not found' });
       return sendJson(res, 500, { error: String(err.message ?? err) });
     }
