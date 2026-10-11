@@ -33,18 +33,25 @@ export function parseIndex(text, project, file = '00-index.md') {
     const line = t.line + 2 + i;
 
     if (/当前阶段/.test(key)) {
-      // 收集「当前阶段」单元格里出现的全部不同阶段号；不确定就必须可表达，不要猜。
-      // 规则：① 紧跟 `阶段` 的 `数字–数字` 区间记作两个独立阶段号（如 `阶段 0–1` → 0 与 1）；
-      //      ② 每个 `阶段` 后紧跟的单个数字（负向先行断言排除已被 ① 计过的区间左端）。
+      // 收集「当前阶段」单元格里出现的全部不同阶段号；不确定就必须可表达，不要猜（用户裁定「不唯一就不猜」）。
+      // 三种形态，候选取并集（不唯一 → unknown + MULTI_PHASE）：
+      //   ① 区间：紧跟 `阶段` 的 `数字–数字`（如 `阶段 0–1`）→ 两端都算候选；
+      //   ② 同词枚举：一个 `阶段` 后由枚举标点（、 , / ／）串起的多个数字（如 `阶段 0、1`、`阶段0/1`、`阶段 2、3`）
+      //      → 每个数字都算候选；`(?!\d)` 保证不会把 `2026` 这类多位数字的开头当成阶段号。
+      //      全角逗号 `，` 是句子停顿而非枚举标点，故 `阶段 2，等待验收` 仍唯一。
+      //   ③ 单个：每个 `阶段` 后紧跟的单个数字（负向先行断言排除已被 ① 计过的区间左端）。
       // 方括号占位符（`<0–6>`）不算阶段号，也不构成歧义。
       const found = new Set();
-      for (const m of val.matchAll(/阶段\s*([0-6])\s*[-–—~～至到]\s*([0-6])|阶段\s*([0-6])(?!\s*[-–—~～至到]\s*\d)/g)) {
-        if (m[1] !== undefined) {
-          found.add(Number(m[1]));
-          found.add(Number(m[2]));
-        } else {
-          found.add(Number(m[3]));
-        }
+      const add = (v) => found.add(Number(v));
+      for (const m of val.matchAll(/阶段\s*([0-6])\s*[-–—~～至到]\s*([0-6])/g)) {
+        add(m[1]);
+        add(m[2]);
+      }
+      for (const m of val.matchAll(/阶段\s*([0-6])(?!\d)(?:\s*[、,／/]\s*([0-6])(?!\d))+/g)) {
+        for (const d of m[0].match(/[0-6]/g) ?? []) add(d);
+      }
+      for (const m of val.matchAll(/阶段\s*([0-6])(?!\s*[-–—~～至到]\s*\d)/g)) {
+        add(m[1]);
       }
       const candidates = [...found].sort((a, b) => a - b);
       if (val.includes('<') || candidates.length === 0) {

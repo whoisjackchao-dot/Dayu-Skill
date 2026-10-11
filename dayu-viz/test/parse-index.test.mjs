@@ -102,3 +102,58 @@ test('同一阶段号重复出现不算歧义：取该值且无告警', () => {
   assert.equal(p.status.phase, 3);
   assert.deepEqual(p.meta.warnings.filter((x) => x.code === 'MULTI_PHASE'), []);
 });
+
+// ---- 同词枚举（一个「阶段」+ 多个数字）：「不唯一就不猜」同样适用 ----
+
+/** 用一行状态表解析给定单元格，返回 project。 */
+const phaseOf = (cell) => {
+  const p = emptyProject('D:/x', 'D:/x/docs', 'now');
+  parseIndex(statusTable(cell), p, '00-index.md');
+  return p;
+};
+const multiPhaseWarning = (p) => p.meta.warnings.find((x) => x.code === 'MULTI_PHASE');
+
+test('同词枚举「阶段 0、1 已完成」判为不唯一：unknown + MULTI_PHASE（候选 0、1）', () => {
+  const p = phaseOf('阶段 0、1 已完成');
+  assert.equal(p.status.phase, 'unknown');
+  const w = multiPhaseWarning(p);
+  assert.ok(w, '阶段 0、1 已完成 含两个不同阶段号，必须报 MULTI_PHASE');
+  assert.equal(w.message, '当前阶段表述含多个阶段号（0、1），无法唯一确定，置为 unknown');
+  assert.deepEqual(w.ref, { file: '00-index.md', line: 7 });
+});
+
+test('同词枚举「阶段0/1」（斜杠、无空格）判为不唯一：unknown + MULTI_PHASE（候选 0、1）', () => {
+  const p = phaseOf('阶段0/1');
+  assert.equal(p.status.phase, 'unknown');
+  const w = multiPhaseWarning(p);
+  assert.ok(w, '阶段0/1 含两个不同阶段号，必须报 MULTI_PHASE');
+  assert.equal(w.message, '当前阶段表述含多个阶段号（0、1），无法唯一确定，置为 unknown');
+});
+
+test('同词枚举「阶段 2、3 收尾」判为不唯一：unknown + MULTI_PHASE（候选 2、3）', () => {
+  const p = phaseOf('阶段 2、3 收尾');
+  assert.equal(p.status.phase, 'unknown');
+  const w = multiPhaseWarning(p);
+  assert.ok(w, '阶段 2、3 收尾 含两个不同阶段号，必须报 MULTI_PHASE');
+  assert.equal(w.message, '当前阶段表述含多个阶段号（2、3），无法唯一确定，置为 unknown');
+});
+
+test('单个阶段号后接逗号从句「阶段 2，等待验收」仍唯一：取 2 且无 MULTI_PHASE 告警', () => {
+  const p = phaseOf('阶段 2，等待验收');
+  assert.equal(p.status.phase, 2);
+  assert.deepEqual(p.meta.warnings.filter((x) => x.code === 'MULTI_PHASE'), []);
+});
+
+test('同词枚举三连「阶段 0、1、2 已完成」把三个候选全部列出', () => {
+  const p = phaseOf('阶段 0、1、2 已完成');
+  assert.equal(p.status.phase, 'unknown');
+  const w = multiPhaseWarning(p);
+  assert.ok(w, '阶段 0、1、2 已完成 含三个不同阶段号，必须报 MULTI_PHASE');
+  assert.equal(w.message, '当前阶段表述含多个阶段号（0、1、2），无法唯一确定，置为 unknown');
+});
+
+test('同词枚举但同一数字重复「阶段 3 / 3 收尾」不算歧义：取 3 且无告警', () => {
+  const p = phaseOf('阶段 3 / 3 收尾');
+  assert.equal(p.status.phase, 3);
+  assert.deepEqual(p.meta.warnings.filter((x) => x.code === 'MULTI_PHASE'), []);
+});
