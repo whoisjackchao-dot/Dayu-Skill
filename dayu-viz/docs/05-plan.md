@@ -154,3 +154,7 @@
 1. **根因**：代码路径完好（静态资源、API、渲染、SSE 全通），故障是**当时没有服务在运行**，而 CLI 对此无任何提示。
 2. `bin/dayu-viz.mjs` 抽出 `startServer()` 以便测试，并新增：缺 `docs/` 子目录时**不启动**、exit 2 并给出可操作报错；端口占用时 exit 2 并给出换端口提示。
 3. 新增 `test/live-update.test.mjs`：以真实 `http.request` 长连接驱动真实 `startServer()` 接线，实测 `ready`/`update` 事件时延（478ms，门槛 2000ms）、去抖合并、关闭后无残留 socket。此前该链路**零自动化覆盖**。
+
+### 7.3 `M2` 范围补充之二（2026-10-11，dogfooding 发现）
+
+`M2` 新增第二项：**`当前阶段` 含多个阶段号时报 `unknown` + `MULTI_PHASE` 告警**（现行为是取首值，会自信地报错）。详见 `07-evidence-log.md` 的「新发现」一节。**该项涉及 `G1` 子判据的口径，须由用户确认后再实施。**
