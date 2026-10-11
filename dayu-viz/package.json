@@ -1,0 +1,14 @@
+{
+  "name": "dayu-viz",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dayu 项目全生命周期可视化看板",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "bin": { "dayu-viz": "bin/dayu-viz.mjs" },
+  "scripts": {
+    "start": "node bin/dayu-viz.mjs",
+    "test": "node --test"
+  }
+}
