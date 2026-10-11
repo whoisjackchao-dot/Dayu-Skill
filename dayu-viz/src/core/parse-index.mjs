@@ -33,9 +33,33 @@ export function parseIndex(text, project, file = '00-index.md') {
     const line = t.line + 2 + i;
 
     if (/当前阶段/.test(key)) {
-      const m = /阶段\s*([0-6])/.exec(val);
-      // 带占位符的「阶段 <0–6>」不构成有效阶段
-      status.phase = m && !val.includes('<') ? Number(m[1]) : UNKNOWN;
+      // 收集「当前阶段」单元格里出现的全部不同阶段号；不确定就必须可表达，不要猜。
+      // 规则：① 紧跟 `阶段` 的 `数字–数字` 区间记作两个独立阶段号（如 `阶段 0–1` → 0 与 1）；
+      //      ② 每个 `阶段` 后紧跟的单个数字（负向先行断言排除已被 ① 计过的区间左端）。
+      // 方括号占位符（`<0–6>`）不算阶段号，也不构成歧义。
+      const found = new Set();
+      for (const m of val.matchAll(/阶段\s*([0-6])\s*[-–—~～至到]\s*([0-6])|阶段\s*([0-6])(?!\s*[-–—~～至到]\s*\d)/g)) {
+        if (m[1] !== undefined) {
+          found.add(Number(m[1]));
+          found.add(Number(m[2]));
+        } else {
+          found.add(Number(m[3]));
+        }
+      }
+      const candidates = [...found].sort((a, b) => a - b);
+      if (val.includes('<') || candidates.length === 0) {
+        status.phase = UNKNOWN;
+      } else if (candidates.length === 1) {
+        status.phase = candidates[0];
+      } else {
+        status.phase = UNKNOWN;
+        addWarning(
+          project,
+          'MULTI_PHASE',
+          `当前阶段表述含多个阶段号（${candidates.join('、')}），无法唯一确定，置为 unknown`,
+          { file, line },
+        );
+      }
     } else if (/当前节点/.test(key)) {
       const ids = extractIds(val, 'M');
       if (ids.length === 0) {

@@ -25,10 +25,20 @@ const INDEX = `# 生成创作 Agent
 - **已知不可信**：EV-Q02-1 价格为第三方转述
 `;
 
+test('当前阶段含多个阶段号时置 unknown 并报 MULTI_PHASE（不再自信取首值）', () => {
+  const p = emptyProject('D:/x', 'D:/x/docs', 'now');
+  parseIndex(INDEX, p, '00-index.md');
+  assert.equal(p.status.phase, 'unknown');
+  const w = p.meta.warnings.find((x) => x.code === 'MULTI_PHASE');
+  assert.ok(w, 'INDEX 单元格同时含 阶段 2 与 阶段 0–1，必须产出 MULTI_PHASE 告警');
+  assert.equal(w.message, '当前阶段表述含多个阶段号（0、1、2），无法唯一确定，置为 unknown');
+  assert.deepEqual(w.ref, { file: '00-index.md', line: 7 });
+});
+
 test('解析阶段、节点、会话目标与文档版本', () => {
   const p = emptyProject('D:/x', 'D:/x/docs', 'now');
   parseIndex(INDEX, p, '00-index.md');
-  assert.equal(p.status.phase, 2);
+  assert.equal(p.status.phase, 'unknown');
   assert.equal(p.status.currentNode, 'M0');
   assert.match(p.status.sessionGoal, /M1 规划完成/);
   assert.match(p.status.docVersion, /v0\.4/);
@@ -57,9 +67,38 @@ test('节点表述含多个里程碑时取首个并记 warning', () => {
   assert.equal(typeof w.ref.line, 'number');
 });
 
-test('模板 index（占位符）不得被当作有效阶段', () => {
+test('模板 index（占位符）不得被当作有效阶段，也不得报 MULTI_PHASE', () => {
   const p = emptyProject('D:/x', 'D:/x/docs', 'now');
   parseIndex('## 当前状态\n\n| 字段 | 值 |\n| --- | --- |\n| 当前阶段 | 阶段 <0–6>：<名称> |\n| 当前节点 | `M<N>`：<名称> |\n', p, '00-index.md');
   assert.equal(p.status.phase, 'unknown');
   assert.equal(p.status.currentNode, 'unknown');
+  assert.equal(p.meta.warnings.some((x) => x.code === 'MULTI_PHASE'), false);
+});
+
+// 该表仅一行数据：表头在第 5 行、分隔行第 6 行，「当前阶段」数据行 = 第 7 行。
+const statusTable = (phaseCell) =>
+  `# T\n\n## 当前状态\n\n| 字段 | 值 |\n| --- | --- |\n| 当前阶段 | ${phaseCell} |\n\n## 交接（最后更新：2026-10-11）\n\n- **本次完成**：x\n`;
+
+test('唯一阶段号：取该值且无 MULTI_PHASE 告警', () => {
+  const p = emptyProject('D:/x', 'D:/x/docs', 'now');
+  parseIndex(statusTable('阶段 2：项目规划'), p, '00-index.md');
+  assert.equal(p.status.phase, 2);
+  assert.deepEqual(p.meta.warnings.filter((x) => x.code === 'MULTI_PHASE'), []);
+});
+
+test('两个不同阶段号：置 unknown 并报 MULTI_PHASE，候选与行号都在告警里', () => {
+  const p = emptyProject('D:/x', 'D:/x/docs', 'now');
+  parseIndex(statusTable('阶段 0–1 完成，进入阶段 2'), p, '00-index.md');
+  assert.equal(p.status.phase, 'unknown');
+  const w = p.meta.warnings.find((x) => x.code === 'MULTI_PHASE');
+  assert.ok(w, '阶段 0–1 完成，进入阶段 2 含两个不同阶段号，必须报 MULTI_PHASE');
+  assert.equal(w.message, '当前阶段表述含多个阶段号（0、1、2），无法唯一确定，置为 unknown');
+  assert.deepEqual(w.ref, { file: '00-index.md', line: 7 });
+});
+
+test('同一阶段号重复出现不算歧义：取该值且无告警', () => {
+  const p = emptyProject('D:/x', 'D:/x/docs', 'now');
+  parseIndex(statusTable('阶段 3 收尾，阶段 3 验证'), p, '00-index.md');
+  assert.equal(p.status.phase, 3);
+  assert.deepEqual(p.meta.warnings.filter((x) => x.code === 'MULTI_PHASE'), []);
 });
