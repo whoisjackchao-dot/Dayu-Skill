@@ -41,10 +41,23 @@ evidence/
 
 | 用例ID | 层级 | 状态 | 环境/版本 | 证据路径 | 执行者 | 时间 | 未决Q项 | 清理确认 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| D-M0-01 | D | PASS | Windows / 本机 | `docs/00-index.md`、`docs/05-plan.md` | deepseek-flash（Batch 1 实现者） | 2026-10-11 | Q01 | 无副作用 |
+| D-M0-01 | D | PASS（fix round 1 重跑；原 2026-10-11 记录的 PASS 在 `00-index.md` 63 行时不成立，已作废） | Windows / 本机 | `docs/00-index.md`、`docs/05-plan.md`、`docs/01-decisions.md`、`docs/02-requirements.md` | deepseek-flash（Fix round 1 执行者） | 2026-10-11 | Q01 | 无副作用（只读核对） |
+
+**D-M0-01 重跑明细（2026-10-11，fix round 1）** — 四项逐条实测，命令与观察：
+
+| # | 判据 | 命令 | 观察 | 结果 |
+| --- | --- | --- | --- | --- |
+| 1 | 每条 `R` 可被单独引用 | `Select-String 02-requirements.md -Pattern '^\| \`R\d+\` \|'` | 9 行，`R01`–`R09` 各占一独立表格行 | PASS |
+| 2 | 每个 `Q` 写明"卡在谁那里 / 最迟何时" | `Select-String 01-decisions.md -Pattern '^\| \`+Q\d+\`+ \|'` | 4 行；`Q01` 卡在用户 / `M5`；`Q02` `M2` 前；`Q03` `M4` 前；`Q04` `M5` 前 | PASS |
+| 3 | `05-plan.md` 每张卡含「明确未交付」与「不算完成」 | `Select-String 05-plan.md -Pattern '^### M\d'` / `'\*\*明确未交付\*\*'` / `'\*\*不算完成\*\*'` | 6 / 6 / 6 | PASS |
+| 4 | `00-index.md` 不超过 60 行 | `Select-String 00-index.md -Pattern '^' \| Measure-Object -Line` | 59 行（fix round 1 由 63 行收敛） | PASS |
+
+> 上述 4 条即 Task 1 Step 6 的全部判据。第 4 条在 2026-10-11 初次记录时为 63 行、**不通过**；收敛到 59 行后重跑通过。4/4 通过，故本次重记为 `PASS`。
 
 ## 状态变更记录（追加）
 
 | 日期 | 对象 | 原状态/原表述 | 新状态/新表述 | 原因 |
 | --- | --- | --- | --- | --- |
 | 2026-10-11 | `docs/*` | dayu 模板占位内容 | `M0` 基线真实内容 | Task 1 交付 `M0` 文档基线 |
+| 2026-10-11 | `D-M0-01` | `PASS`（`00-index.md` 63 行时记录） | `PASS`（fix round 1 重跑，`00-index.md` 59 行，4/4 判据通过） | 原记录与自身产物矛盾：63 行违反「不超过 60 行」；先收敛文档，再按实跑结果重记 |
+| 2026-10-11 | `00-index.md` | 63 行 | 59 行 | Task 1 Step 5 硬约束；仅删摘要散文并合并不相邻文档地图行，七个交接字段、四行 `Q`、全部文件指针保留 |
